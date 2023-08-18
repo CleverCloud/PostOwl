@@ -18,10 +18,6 @@ PostOwl is open-source software so you can deploy it to any web host you wish.
 
 We'll be releasing a hosted version soon. [Join the email newsletter](https://www.postowl.com/newsletter/) to hear when it's ready.
 
-### Deploy to fly.io
-
-**PostOwl runs for free on [fly.io](https://fly.io/)** which is one of the reasons we're recommending their platform for the first release. If you [follow the steps on the documentation website](https://www.postowl.com/docs/administration-guide/deploy/) you should have a live site in about 15 minutes.
-
 ## Get updates by email
 
 Hear about new releases and what's going on in the PostOwl community by [joining the email newsletter](https://www.postowl.com/newsletter/).
