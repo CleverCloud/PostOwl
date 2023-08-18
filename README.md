@@ -89,3 +89,99 @@ We like JavaScript. That doesn't mean that PostOwl might not be converted to Typ
 ## Contributing
 
 New contributors welcome! Join the [Discussions](https://github.com/PostOwl/postowl/discussions/) or submit a PR. (We have opinions about what should be included in PostOwl, so it's best to discuss with first to see if a new feature will be accepted.)
+
+## Deploy on Clever Cloud
+
+## What is Clever Cloud
+
+Clever Cloud is a European cloud provider that handles all the infrastructure so developers can focus on their code. Deployments are immutable, meaning your app will restart when scaling, crashing or updating. PostOwl uses SQLite, so this tutorial explains how  to deploy PostOwl with a replicated and always updated database. At the end, you'll get:
+
+- A deployed PostOwl app
+- A really fast integrated database ❤️
+- ... continuously replicated! 
+
+For this, we are going to use [Litestream](https://litestream.io) and [Clever Cloud deployment hooks](https://www.clever-cloud.com/doc/develop/build-hooks/) and its S3-like object storage service, [Cellar](https://www.clever-cloud.com/doc/deploy/addon/cellar/).
+
+## Requirements
+
+- Git
+- A Clever Cloud account
+- [Litestream](https://litestream.io/install/) installed on your machine
+
+## 📁 Backup your local SQLite
+
+You'll need an object storage bucket (also called S3 storage) where you'll store your database snapshots. From the Clever Cloud Console, create an Cellar add-on: 
+
+1. Click on **Create > an add-on**
+2. Choose **Cellar**
+3. Create a bucket and name it as you wish
+
+On Cellar dashboard, check **Informations** with the environment variables you'll need in your project: 
+
+- `CELLAR_ADDON_HOST`
+- `CELLAR_ADDON_KEY_ID`
+- `CELLAR_ADDON_KEY_SECRET`
+
+Copy those values and save it somewhere safe.
+
+Fill `litestream.yml` with these environment variables values:
+
+Now you can run the command to replicate your SQLite database : `./litestream replicate -config litestream.yml`. 
+
+💡I usually advise that you create a specific folder in your bucket to host the database snapshots, you can use [s3cmd CLI](https://s3tools.org/usage) or a S3 client like [Cyberduck](https://cyberduck.io) to do so. If you create a folder in your bucket, make sure to change the `path` value in your `litestream.yml`. 
+
+Finally, add `litestream.yml` to your gitignore, and ⚠️ never commit it anywhere!
+
+## 🛠️ Configure your PostOwl app
+ 
+There is a `litestream.sh` file at the root of this repository that will:
+
+- Download Litestream on Clever Cloud server
+- Create a configuration file for Litestream
+- Remove your database and recreate it with the last backups from your Cellar bucket
+
+Time to deploy!
+
+## 🚀 Deployment
+
+Follow these steps to deploy your PostOwl app.
+
+### 1. Declare your app
+
+1. From Clever Cloud console, click on **Create>an application**
+5. Choose your deployment method (Git or Github)
+6. Choose a **NodeJS**  runtime and select your instance size (smallest one works for a small project)
+7. Inject the following environment variables (use **Expert**)
+
+```
+BUCKET_DIRECTORY= "."
+CC_PRE_RUN_HOOK="./litestream.sh"
+CC_WORKER_COMMAND="./litestream replicate -config litestream.yml"
+CC_WORKER_RESTART="always"
+CC_WORKER_RESTART_DELAY="60"
+CELLAR_REGION="fr-par"
+DATA_DIR="data"
+DB_PATH="data/db.sqlite3"
+LITESTREAM_BACKUPS="."
+LITESTREAM_BUCKET="<name-of-your-bucket>"
+LITESTREAM_VERSION="0.3.9"
+```
+
+⚠️ If you've created a folder in your Cellar bucket, make sure to change the values of `BUCKET_DIRECTORY` and `LITESTREAM_BACKUPS`.
+ 
+Add variables from your project's `.env` file as well. Variables will be dynamically injected on deployment.
+
+### 2. Connect Cellar add-on
+
+Before pushing your code, we'll connect your Cellar add-on to your app so its environment variables will be injected as well.
+
+1. From your NodeJS app menu, click on **Service dependencies**
+2. On **Link add-ons**, select your Cellar add-on
+
+### 3. Push the code
+
+1. From your NodeJS app menu, go to **Information**
+2. Copy the deployment command
+3. Paste it at the root of your project and launch it
+
+Now your deployment has started, which you can follow from the **Logs** panel.

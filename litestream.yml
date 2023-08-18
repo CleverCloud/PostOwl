@@ -1,0 +1,11 @@
+# Fill this with Cellar add-on variables value
+dbs:
+  - path: data/db.sqlite3
+    replicas:
+      - type: s3
+        bucket: <you_bucket_name>
+        path: .
+        endpoint: <CELLAR_ADDON_HOST>
+        region: fr-par
+        access-key-id: <CELLAR_ADDON_KEY_ID>
+        secret-access-key: <CELLAR_ADDON_KEY_SECRET>
